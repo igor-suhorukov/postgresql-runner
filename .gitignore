@@ -1,0 +1,6 @@
+.m2
+target
+dependency-reduced-pom.xml
+.mvn/timing.properties
+*.iml
+.idea

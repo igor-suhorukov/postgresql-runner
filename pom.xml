@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.github.igor-suhorukov</groupId>
+    <artifactId>postgresql-runner</artifactId>
+    <packaging>jar</packaging>
+    <version>${postgresql.embedded.version}-SNAPSHOT</version>
+    <name>postgresql-runner</name>
+    <description>Download and start PostgreSQL as part of standalone java application. Based on Yandex QA tools.</description>
+    <url>https://github.com/igor-suhorukov/postgresql-runner</url>
+    <developers>
+        <developer>
+            <name>Igor Sukhorukov</name>
+            <url>http://suhorukov.blogspot.ru</url>
+            <email>igor.suhorukov[skip this] at gmail.com</email>
+        </developer>
+    </developers>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <url>https://github.com/igor-suhorukov/postgresql-runner.git</url>
+        <connection>scm:git:git://github.com/igor-suhorukov/postgresql-runner.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/igor-suhorukov/postgresql-runner.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+    <properties>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <postgresql.embedded.version>1.23</postgresql.embedded.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>ru.yandex.qatools.embed</groupId>
+            <artifactId>postgresql-embedded</artifactId>
+            <version>${postgresql.embedded.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
+        </dependency>
+    </dependencies>
+</project>
