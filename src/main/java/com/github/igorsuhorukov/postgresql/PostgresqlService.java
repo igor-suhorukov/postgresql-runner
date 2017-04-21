@@ -12,43 +12,54 @@ import ru.yandex.qatools.embed.postgresql.ext.CachedArtifactStoreBuilder;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
+import java.util.List;
+import java.util.Optional;
 
 import static ru.yandex.qatools.embed.postgresql.distribution.Version.Main.PRODUCTION;
 
 @Named("PostgreSQL")
 @Singleton
-public class PostgresqlService implements AutoCloseable{
+public class PostgresqlService implements IPostgresqlService {
 
+    List<String> dbParams= Arrays.asList( "-E", "UTF-8", "--locale=C", "--lc-collate=C", "--lc-ctype=C");
+    String username = System.getProperty("db.user", "user");
+    String password = System.getProperty("db.password", "password");
+    String databaseName = System.getProperty("db.name", "database");
+    String databaseStoragePath = System.getProperty("db.storage", "database_storage");
+    String host = System.getProperty("db.host", "localhost");
+    int port;
+    {
+        try {
+            String dbPortProperty = System.getProperty("db.port");
+            if(dbPortProperty==null) {
+                port = Network.getFreeServerPort();
+            } else {
+                port = Integer.parseInt(dbPortProperty);
+            }
+        } catch (NumberFormatException | IOException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
     protected PostgresProcess process;
     private PostgresConfig config;
 
     @PostConstruct
     public void start() throws IOException {
-        // turns off the default functionality of unzipping on every run.
         IRuntimeConfig runtimeConfig = buildRuntimeConfig();
 
         PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter.getInstance(runtimeConfig);
         config = new PostgresConfig(PRODUCTION,
-                new AbstractPostgresConfig.Net("localhost", Network.getFreeServerPort()),
-                new AbstractPostgresConfig.Storage(
-                        System.getProperty("db.name","database"),
-                        System.getProperty("db.storage","database_storage")),
+                new AbstractPostgresConfig.Net(host, port),
+                new AbstractPostgresConfig.Storage(databaseName, databaseStoragePath),
                 new AbstractPostgresConfig.Timeout(),
-                new AbstractPostgresConfig.Credentials(
-                        System.getProperty("db.user","user"), System.getProperty("db.password","password")));
-        config.getAdditionalInitDbParams().addAll(Arrays.asList(
-                "-E", "SQL_ASCII",
-                "--locale=C",
-                "--lc-collate=C",
-                "--lc-ctype=C"
-        ));
+                new AbstractPostgresConfig.Credentials(username, password));
+        config.getAdditionalInitDbParams().addAll(dbParams);
 
         PostgresExecutable exec = runtime.prepare(config);
         process = exec.start();
@@ -58,6 +69,62 @@ public class PostgresqlService implements AutoCloseable{
     @Override
     public void close() throws Exception {
         process.stop();
+    }
+
+    @Inject
+    @Named("postgresUsername")
+    public void setUsername(Optional<String> username) {
+        if(username.isPresent()) {
+            this.username = username.get();
+        }
+    }
+
+    @Inject
+    @Named("postgresPassword")
+    public void setPassword(Optional<String> password) {
+        if(password.isPresent()) {
+            this.password = password.get();
+        }
+    }
+
+    @Inject
+    @Named("postgresDatabaseName")
+    public void setDatabaseName(Optional<String> databaseName) {
+        if(databaseName.isPresent()) {
+            this.databaseName = databaseName.get();
+        }
+    }
+
+    @Inject
+    @Named("postgresDatabaseStoragePath")
+    public void setDatabaseStoragePath(Optional<String> databaseStoragePath) {
+        if(databaseStoragePath.isPresent()) {
+            this.databaseStoragePath = databaseStoragePath.get();
+        }
+    }
+
+    @Inject
+    @Named("postgresHost")
+    public void setHost(Optional<String> host) {
+        if(host.isPresent()) {
+            this.host = host.get();
+        }
+    }
+
+    @Inject
+    @Named("postgresPort")
+    public void setPort(Optional<Integer> port) {
+        if(port.isPresent()) {
+            this.port = port.get();
+        }
+    }
+
+    @Inject
+    @Named("postgresDatabaseParameters")
+    public void setDatabaseParameters(Optional<List<String>> dbParams) {
+        if(dbParams.isPresent()) {
+            this.dbParams = dbParams.get();
+        }
     }
 
     public String getJdbcConnectionUrl(){
@@ -70,12 +137,12 @@ public class PostgresqlService implements AutoCloseable{
         );
     }
 
-    public int getPort(){
-        return config.net().port();
-    }
-
     public String getHost(){
         return config.net().host();
+    }
+
+    public int getPort(){
+        return config.net().port();
     }
 
     public String getDatabaseName(){
