@@ -8,11 +8,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.annotation.PreDestroy;
+import java.sql.*;
+import java.util.Date;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
-@ContextConfiguration(classes = PgContext.class, name = "simpleConfig")
+@ContextConfiguration(classes = PgContext.class)
 @RunWith(SpringJUnit4ClassRunner.class)
 public class PostgresqlServiceTest {
 
@@ -33,5 +34,19 @@ public class PostgresqlServiceTest {
         assertNotNull(postgresqlService.getJdbcConnectionUrl());
         assertEquals("user", postgresqlService.getUsername());
         assertEquals("database", postgresqlService.getDatabaseName());
+    }
+
+    @Test
+    public void testJdbcConnection() throws Exception{
+        try (Connection connection = DriverManager.getConnection(postgresqlService.getJdbcConnectionUrl())){
+            try (Statement statement = connection.createStatement()){
+                try (ResultSet resultSet = statement.executeQuery("select now()")){
+                    assertTrue(resultSet.next());
+                    Timestamp timestamp = resultSet.getTimestamp(1);
+                    assertNotNull(timestamp);
+                    assertTrue(timestamp.before(new Date()));
+                }
+            }
+        }
     }
 }
