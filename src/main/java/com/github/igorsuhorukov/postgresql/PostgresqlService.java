@@ -1,14 +1,16 @@
 package com.github.igorsuhorukov.postgresql;
 
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
+import de.flapdoodle.embed.process.distribution.GenericVersion;
 import de.flapdoodle.embed.process.io.directories.FixedPath;
 import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.embed.process.store.PostgresArtifactStoreBuilder;
 import ru.yandex.qatools.embed.postgresql.*;
 import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig;
-import ru.yandex.qatools.embed.postgresql.config.DownloadConfigBuilder;
 import ru.yandex.qatools.embed.postgresql.config.PostgresConfig;
+import ru.yandex.qatools.embed.postgresql.config.PostgresDownloadConfigBuilder;
 import ru.yandex.qatools.embed.postgresql.config.RuntimeConfigBuilder;
-import ru.yandex.qatools.embed.postgresql.ext.CachedArtifactStoreBuilder;
+import ru.yandex.qatools.embed.postgresql.distribution.Version;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -21,8 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static ru.yandex.qatools.embed.postgresql.distribution.Version.Main.PRODUCTION;
-
 @Named("PostgreSQL")
 @Singleton
 public class PostgresqlService implements IPostgresqlService {
@@ -33,6 +33,7 @@ public class PostgresqlService implements IPostgresqlService {
     String databaseName = System.getProperty("db.name", "database");
     String databaseStoragePath = System.getProperty("db.storage", "database_storage");
     String host = System.getProperty("db.host", "localhost");
+    String version = System.getProperty("db.version", Version.V9_6_3.asInDownloadPath());
     int port;
     {
         try {
@@ -54,7 +55,7 @@ public class PostgresqlService implements IPostgresqlService {
         IRuntimeConfig runtimeConfig = buildRuntimeConfig();
 
         PostgresStarter<PostgresExecutable, PostgresProcess> runtime = PostgresStarter.getInstance(runtimeConfig);
-        config = new PostgresConfig(PRODUCTION,
+        config = new PostgresConfig(new GenericVersion(version),
                 new AbstractPostgresConfig.Net(host, port),
                 new AbstractPostgresConfig.Storage(databaseName, databaseStoragePath),
                 new AbstractPostgresConfig.Timeout(),
@@ -74,57 +75,49 @@ public class PostgresqlService implements IPostgresqlService {
     @Inject
     @Named("postgresUsername")
     public void setUsername(Optional<String> username) {
-        if(username.isPresent()) {
-            this.username = username.get();
-        }
+        username.ifPresent(parameter -> this.username = parameter);
     }
 
     @Inject
     @Named("postgresPassword")
     public void setPassword(Optional<String> password) {
-        if(password.isPresent()) {
-            this.password = password.get();
-        }
+        password.ifPresent(parameter -> this.password = parameter);
     }
 
     @Inject
     @Named("postgresDatabaseName")
     public void setDatabaseName(Optional<String> databaseName) {
-        if(databaseName.isPresent()) {
-            this.databaseName = databaseName.get();
-        }
+        databaseName.ifPresent(parameter -> this.databaseName = parameter);
     }
 
     @Inject
     @Named("postgresDatabaseStoragePath")
     public void setDatabaseStoragePath(Optional<String> databaseStoragePath) {
-        if(databaseStoragePath.isPresent()) {
-            this.databaseStoragePath = databaseStoragePath.get();
-        }
+        databaseStoragePath.ifPresent(parameter -> this.databaseStoragePath = parameter);
     }
 
     @Inject
     @Named("postgresHost")
     public void setHost(Optional<String> host) {
-        if(host.isPresent()) {
-            this.host = host.get();
-        }
+        host.ifPresent(parameter -> this.host = parameter);
     }
 
     @Inject
     @Named("postgresPort")
     public void setPort(Optional<Integer> port) {
-        if(port.isPresent()) {
-            this.port = port.get();
-        }
+        port.ifPresent(parameter -> this.port = parameter);
     }
 
     @Inject
     @Named("postgresDatabaseParameters")
     public void setDatabaseParameters(Optional<List<String>> dbParams) {
-        if(dbParams.isPresent()) {
-            this.dbParams = dbParams.get();
-        }
+        dbParams.ifPresent(parameter -> this.dbParams = parameter);
+    }
+
+    @Inject
+    @Named("postgresVersion")
+    public void setVersion(Optional<String> version) {
+        version.ifPresent(parameter -> this.version = parameter);
     }
 
     public String getJdbcConnectionUrl(){
@@ -164,10 +157,10 @@ public class PostgresqlService implements IPostgresqlService {
         final FixedPath cachedDir = new FixedPath(tmpDir);
         return new RuntimeConfigBuilder()
                 .defaults(cmd)
-                .artifactStore(new CachedArtifactStoreBuilder()
+                .artifactStore(new PostgresArtifactStoreBuilder()
                         .defaults(cmd)
                         .tempDir(cachedDir)
-                        .download(new DownloadConfigBuilder()
+                        .download(new PostgresDownloadConfigBuilder()
                                 .defaultsForCommand(cmd)
                                 .packageResolver(new PackagePaths(cmd, cachedDir))
                                 .build()))
