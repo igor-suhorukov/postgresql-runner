@@ -4,10 +4,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.annotation.PreDestroy;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -15,6 +15,7 @@ import static org.junit.Assert.assertNotNull;
 
 @ContextConfiguration(classes = PgContextPropOverride.class)
 @RunWith(SpringJUnit4ClassRunner.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class PostgresqlServiceCustomParamsTest {
 
     @Autowired
@@ -22,11 +23,6 @@ public class PostgresqlServiceCustomParamsTest {
 
     @Autowired
     PostgresqlService postgresqlService;
-
-    @PreDestroy
-    private void releaseContext(){
-        applicationContext.close();
-    }
 
     @Test
     public void testSpringContextPgService() throws Exception {

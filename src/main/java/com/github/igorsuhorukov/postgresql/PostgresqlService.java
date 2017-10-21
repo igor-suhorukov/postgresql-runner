@@ -1,9 +1,12 @@
 package com.github.igorsuhorukov.postgresql;
 
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
+import de.flapdoodle.embed.process.config.store.DownloadConfigBuilder;
 import de.flapdoodle.embed.process.distribution.GenericVersion;
 import de.flapdoodle.embed.process.io.directories.FixedPath;
 import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.embed.process.store.ArtifactStoreBuilder;
+import de.flapdoodle.embed.process.store.IDownloader;
 import de.flapdoodle.embed.process.store.PostgresArtifactStoreBuilder;
 import ru.yandex.qatools.embed.postgresql.*;
 import ru.yandex.qatools.embed.postgresql.config.AbstractPostgresConfig;
@@ -34,6 +37,7 @@ public class PostgresqlService implements IPostgresqlService {
     String databaseStoragePath = System.getProperty("db.storage", "database_storage");
     String host = System.getProperty("db.host", "localhost");
     String version = System.getProperty("db.version", Version.V9_6_3.asInDownloadPath());
+    String downloadPath = System.getProperty("db.downloadPath");
     int port;
     {
         try {
@@ -49,6 +53,7 @@ public class PostgresqlService implements IPostgresqlService {
     }
     protected PostgresProcess process;
     private PostgresConfig config;
+    private IDownloader downloader;
 
     @PostConstruct
     public void start() throws IOException {
@@ -120,6 +125,17 @@ public class PostgresqlService implements IPostgresqlService {
         version.ifPresent(parameter -> this.version = parameter);
     }
 
+    @Inject
+    @Named("postgresDownloadPath")
+    public void setDownloadPath(Optional<String> version) {
+        version.ifPresent(parameter -> this.downloadPath = parameter);
+    }
+
+    @Inject
+    public void setDownloader(Optional<IDownloader> downloader) {
+        downloader.ifPresent(parameter -> this.downloader = parameter);
+    }
+
     public String getJdbcConnectionUrl(){
         return String.format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s",
                 config.net().host(),
@@ -155,15 +171,22 @@ public class PostgresqlService implements IPostgresqlService {
         final String tmpDir = Paths.get(System.getProperty("java.io.tmpdir"), "pgembed").toFile().getPath();
         final Command cmd = Command.Postgres;
         final FixedPath cachedDir = new FixedPath(tmpDir);
-        return new RuntimeConfigBuilder()
+        DownloadConfigBuilder downloadConfigBuilder = new PostgresDownloadConfigBuilder()
+                .defaultsForCommand(cmd)
+                .packageResolver(new PackagePaths(cmd, cachedDir));
+        if (downloadPath!=null){
+            downloadConfigBuilder.downloadPath(downloadPath);
+        }
+        ArtifactStoreBuilder artifactStoreBuilder = new PostgresArtifactStoreBuilder()
                 .defaults(cmd)
-                .artifactStore(new PostgresArtifactStoreBuilder()
-                        .defaults(cmd)
-                        .tempDir(cachedDir)
-                        .download(new PostgresDownloadConfigBuilder()
-                                .defaultsForCommand(cmd)
-                                .packageResolver(new PackagePaths(cmd, cachedDir))
-                                .build()))
-                .build();
+                .tempDir(cachedDir)
+                .download(downloadConfigBuilder
+                        .build());
+
+        if(downloader!=null){
+            artifactStoreBuilder.downloader(downloader);
+        }
+
+        return new RuntimeConfigBuilder().defaults(cmd).artifactStore(artifactStoreBuilder).build();
     }
 }
