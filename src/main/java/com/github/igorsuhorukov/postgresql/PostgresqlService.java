@@ -20,6 +20,7 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public class PostgresqlService implements IPostgresqlService {
     String databaseName = System.getProperty("db.name", "database");
     String databaseStoragePath = System.getProperty("db.storage", "database_storage");
     String host = System.getProperty("db.host", "localhost");
-    String version = System.getProperty("db.version", Version.V9_6_3.asInDownloadPath());
+    String version = System.getProperty("db.version", Version.V9_6_5.asInDownloadPath());
     String downloadPath = System.getProperty("db.downloadPath");
     int port;
     {
@@ -164,6 +165,36 @@ public class PostgresqlService implements IPostgresqlService {
 
     public String getPassword(){
         return config.credentials().password();
+    }
+
+    @Override
+    public void importFromFile(File file) {
+        process.importFromFile(file);
+    }
+
+    @Override
+    public void importFromFileWithArgs(File file, String... cliArgs) {
+        process.importFromFileWithArgs(file, cliArgs);
+    }
+
+    @Override
+    public void restoreFromFile(File file, String... cliArgs) {
+        process.restoreFromFile(file, cliArgs);
+    }
+
+    @Override
+    public void exportToFile(File file) {
+        process.exportToFile(file);
+    }
+
+    @Override
+    public void exportSchemeToFile(File file) {
+        process.exportSchemeToFile(file);
+    }
+
+    @Override
+    public void exportDataToFile(File file) {
+        process.exportDataToFile(file);
     }
 
     protected IRuntimeConfig buildRuntimeConfig() {

@@ -37,7 +37,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <spring.version>4.3.7.RELEASE</spring.version>
-        <postgresql.embedded.version>2.4</postgresql.embedded.version>
+        <postgresql.embedded.version>2.5</postgresql.embedded.version>
         <jetty-version>8.1.16.v20140903</jetty-version>
         <jetty-webapp-artifactId>jetty-webapp</jetty-webapp-artifactId>
         <slf4j-api-version>1.6.6</slf4j-api-version>

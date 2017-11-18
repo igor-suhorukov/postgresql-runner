@@ -55,7 +55,7 @@ public class PostgresqlMavenResolverTest {
         server = new Server(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 9684));
 
         PackagePaths packagePaths = new PackagePaths(null, null);
-        Distribution distribution = Distribution.detectFor(new GenericVersion(Version.V9_6_3.asInDownloadPath()));
+        Distribution distribution = Distribution.detectFor(new GenericVersion(Version.V9_6_5.asInDownloadPath()));
         String postgresFile = packagePaths.getPath(distribution);
 
         String groupArtifactVersion = MavenDownloader.getGroupArtifactVersion(
