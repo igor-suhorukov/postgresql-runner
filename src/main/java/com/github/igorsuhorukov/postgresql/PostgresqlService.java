@@ -1,5 +1,6 @@
 package com.github.igorsuhorukov.postgresql;
 
+import com.github.igorsuhorukov.postgresql.model.FileWithArgs;
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
 import de.flapdoodle.embed.process.config.store.DownloadConfigBuilder;
 import de.flapdoodle.embed.process.distribution.GenericVersion;
@@ -40,7 +41,16 @@ public class PostgresqlService implements IPostgresqlService {
     String version = System.getProperty("db.version", Version.V9_6_5.asInDownloadPath());
     String downloadPath = System.getProperty("db.downloadPath");
     int port;
-    {
+    protected PostgresProcess process;
+    private PostgresConfig config;
+    private IDownloader downloader;
+    protected Optional<FileWithArgs> importFromFileWithArgs = Optional.empty();
+    protected Optional<FileWithArgs> restoreFromFile = Optional.empty();
+    protected Optional<File> exportToFile = Optional.empty();
+    protected Optional<File> exportSchemeToFile = Optional.empty();
+    protected Optional<File> exportDataToFile = Optional.empty();
+
+    public PostgresqlService() {
         try {
             String dbPortProperty = System.getProperty("db.port");
             if(dbPortProperty==null) {
@@ -52,9 +62,6 @@ public class PostgresqlService implements IPostgresqlService {
             throw new ExceptionInInitializerError(e);
         }
     }
-    protected PostgresProcess process;
-    private PostgresConfig config;
-    private IDownloader downloader;
 
     @PostConstruct
     public void start() throws IOException {
@@ -70,11 +77,16 @@ public class PostgresqlService implements IPostgresqlService {
 
         PostgresExecutable exec = runtime.prepare(config);
         process = exec.start();
+        importFromFileWithArgs.ifPresent(parameter -> importFromFileWithArgs(parameter.getFile(), parameter.getCliArgs()));
+        restoreFromFile.ifPresent(parameter -> restoreFromFile(parameter.getFile(), parameter.getCliArgs()));
     }
 
     @PreDestroy
     @Override
     public void close() throws Exception {
+        exportDataToFile.ifPresent(this::exportDataToFile);
+        exportSchemeToFile.ifPresent(this::exportSchemeToFile);
+        exportToFile.ifPresent(this::exportToFile);
         process.stop();
     }
 
@@ -135,6 +147,36 @@ public class PostgresqlService implements IPostgresqlService {
     @Inject
     public void setDownloader(Optional<IDownloader> downloader) {
         downloader.ifPresent(parameter -> this.downloader = parameter);
+    }
+
+    @Inject
+    @Named("importFromFileWithArgs")
+    public void setImportFromFileWithArgs(Optional<FileWithArgs> fileWithArgs){
+        importFromFileWithArgs = fileWithArgs;
+    }
+
+    @Inject
+    @Named("restoreFromFile")
+    public void setRestoreFromFile(Optional<FileWithArgs> fileWithArgs){
+        restoreFromFile = fileWithArgs;
+    }
+
+    @Inject
+    @Named("exportToFile")
+    public void setExportToFile(Optional<File> file){
+        exportToFile = file;
+    }
+
+    @Inject
+    @Named("exportSchemeToFile")
+    public void setExportSchemeToFile(Optional<File> file){
+        exportSchemeToFile = file;
+    }
+
+    @Inject
+    @Named("exportDataToFile")
+    public void setExportDataToFile(Optional<File> file){
+        exportDataToFile = file;
     }
 
     public String getJdbcConnectionUrl(){
