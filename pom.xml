@@ -9,7 +9,7 @@
     <groupId>com.github.igor-suhorukov</groupId>
     <artifactId>postgresql-runner</artifactId>
     <packaging>jar</packaging>
-    <version>2.5-SNAPSHOT</version>
+    <version>2.5</version>
     <name>postgresql-runner</name>
     <description>Download and start PostgreSQL as part of standalone java application. Based on Yandex QA tools.</description>
     <url>https://github.com/igor-suhorukov/postgresql-runner</url>
